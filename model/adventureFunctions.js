@@ -259,5 +259,6 @@ function help (itemToPickup, currentRoom, newRoomFlag) {
                     help,
                     climb,
                     drop,
-                    secret
+                    secret,
+                    pick
                 };
