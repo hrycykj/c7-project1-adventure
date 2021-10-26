@@ -189,7 +189,9 @@ function go (direction, currentRoom, newRoomFlag) {  // same function call as mo
 }
 
 function pick (itemToPickup, currentRoom, newRoomFlag) {
+  let alive = true;
   get (itemToPickup, currentRoom, newRoomFlag);
+  return [currentRoom,newRoomFlag,alive];
 }
 
 function drop (itemToDrop, currentRoom, newRoomFlag) {

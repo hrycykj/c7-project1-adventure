@@ -1,4 +1,4 @@
-const { inspect } = require("./adventureFunctions");
+
 
 let roomInfo=[{ roomName: 'me',
                 longDescription:    "You are tall, possibly handsome and definitely lanky.  Not sure exactly what you are but lets just say you aren't a troll or a teacher.\n" +
@@ -9,7 +9,7 @@ let roomInfo=[{ roomName: 'me',
                             {inventoryName: 'notebook',inventoryLongDescription:    "When you open the notebook up it looks like it contains some mysterious hieroglyphics.  No wait, thats just your math homework.\n" +
                                                                                     "There's a bite out of the cover from your dog.",inventoryShortDescription: 'notebook',inventoryQuantity: 1, useLongInventoryDescription: true}
                             ],
-                roomActions: ['scratch', 'inspect', 'help me', 'end', 'pocket',]
+                roomActions: ['scratch', 'inspect', 'help me', 'end', 'pocket']
                 },
                 { roomName: 'forest',
                 longDescription:    "You find yourself in a dark forest wondering why you are here right now.  You really should be in class working on your math homework.\n" +
@@ -51,7 +51,7 @@ let roomInfo=[{ roomName: 'me',
                 adjacentRooms: [{direction: 'down' ,adjacentRoomName: 'forest'},
                                 {direction: 'up', adjacentRoomName: 'upAPineTree'}
                                 ],
-                inventory: [{inventoryName: 'necklace',inventoryLongDescription: "Yep, definitely a gold necklace, probably 16 inches long.",inventoryShortDescription: 'gold necklace',inventoryQuantity: 1, useLongInventoryDescription: true},
+                inventory: [{inventoryName: 'necklace',inventoryLongDescription: "Yep, definitely a gold necklace, probably 16 inches long.",inventoryShortDescription: 'gold necklace',inventoryQuantity: 1, useLongInventoryDescription: true}
                             ],
                 roomActions: ['go','move','get','pick', 'drop', 'look', 'help', 'climb', 'secret']
                 },
