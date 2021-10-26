@@ -1,0 +1,14 @@
+{
+  "name": "c7project1-chooseyourownadventure",
+  "version": "1.0.0",
+  "description": "",
+  "main": "testFunctionsOut.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
