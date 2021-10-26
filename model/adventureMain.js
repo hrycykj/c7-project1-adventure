@@ -1,8 +1,8 @@
 // main game structure
 
 
-let adventureFunctions = require('../model/adventureFunctions');
-let {roomInfo} = require('../model/roomInfo');
+let adventureFunctions = require('./adventureFunctions');
+let {roomInfo} = require('./roomInfo');
 
 
 

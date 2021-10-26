@@ -1,5 +1,5 @@
 const prompt = require('prompt-sync')({sigint: true}); //run npm install prompt-sync in the terminal to make sure this will work, prompt is used in waitForUserInput function
-let {roomInfo} = require('../model/roomInfo');
+let {roomInfo} = require('./roomInfo');
 
 
 function findCurrentRoomIndex(room) {
@@ -237,7 +237,7 @@ function help (itemToPickup, currentRoom, newRoomFlag) {
   for (let i=0; i<currentRoomActions.length-1; i++) {
     helpString=helpString+currentRoomActions[i]+', \n';
   }
-  helpString = helpString+currentRoomActions[i+1]+'\n';
+  // helpString = helpString+currentRoomActions[i+1]+'\n';
   console.log(helpString);
   return [currentRoom, newRoomFlag, alive];
 }
