@@ -92,5 +92,19 @@ let roomInfo=[{ roomName: 'me',
                 }
                 ];
 
+function findCurrentRoomIndexByName(room) {
+    return roomInfo.findIndex (el=>el.roomName==room); //returns -1 if the room doesn't match any of the existing rooms
+    }
 
-module.exports =    {roomInfo};
+function getCurrentRoomDetails (roomIndex) {
+    return roomInfo[roomIndex];
+}
+
+function modifyRoomInfo (roomIndex,attributeToModify, newValue) {
+    roomInfo[roomIndex][attributeToModify]=newValue;
+}
+
+module.exports =    {roomInfo,
+                    findCurrentRoomIndexByName,
+                    getCurrentRoomDetails,
+                    modifyRoomInfo};

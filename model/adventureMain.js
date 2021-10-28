@@ -2,7 +2,9 @@
 
 
 let adventureFunctions = require('./adventureFunctions');
-let {roomInfo} = require('./roomInfo');
+let {roomInfo,
+    findCurrentRoomIndexByName,
+    modifyRoomInfo} = require('./roomInfo');
 
 
 
@@ -18,12 +20,13 @@ let whileRoomIsNew=true;
 
 
 //main start
+function mainGame() {
 let action='';
 let allowedAction=false;
 let allowedMeAction=false;
 
 while (isMeAlive) {
-  adventureFunctions.displayCurrentRoomInfo(currentRoom);
+  console.log (adventureFunctions.displayCurrentRoomInfo(currentRoom));
   whileRoomIsNew=false;
   while (!whileRoomIsNew&&isMeAlive) {
     let actionPhrase='';
@@ -55,5 +58,10 @@ while (isMeAlive) {
 
   }
 }
-console.log("Oops, you've passed on somehow (but its probably better than math class).")
+console.log(adventureFunctions.endGame());
 
+}
+
+mainGame();
+
+module.exports = {mainGame};

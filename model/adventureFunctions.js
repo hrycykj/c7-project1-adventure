@@ -1,33 +1,26 @@
 const prompt = require('prompt-sync')({sigint: true}); //run npm install prompt-sync in the terminal to make sure this will work, prompt is used in waitForUserInput function
-let {roomInfo} = require('./roomInfo');
+let {roomInfo,
+    findCurrentRoomIndexByName,
+    getCurrentRoomDetails,
+    modifyRoomInfo} = require('./roomInfo');
 
 
-function findCurrentRoomIndex(room) {
-    // find the current room index so you can access the room in the database array directly, returns -1 if the room doesn't exist
-    /* let i=0;
-    while (i<roomInfo.length) {
-      if (roomInfo[i].roomName==room) {
-        return i;
-      }
-      i++
-    }
-    return -1 */
-    return roomInfo.findIndex (el=>el.roomName==room);
-  }
+
   
   function displayCurrentRoomInfo(currentRoom) {
     // once datebase is set up, get roomInfo[currentRoom].useLongRoomDescription
-    let currentRoomIndex = findCurrentRoomIndex(currentRoom);
-    if (currentRoomIndex<0) {
-      console.log ("I don't really know where you are right now, something has gone terribly wrong...") // need to figure out how to set room to lost when this happens
-    } else {
-      if (roomInfo[currentRoomIndex].useLongRoomDescription) {
-        console.log(roomInfo[currentRoomIndex].longDescription);
-        roomInfo[currentRoomIndex].useLongRoomDescription = false;
+    let currentRoomIndex = findCurrentRoomIndexByName(currentRoom);
+    let currentRoomInfo = getCurrentRoomDetails(currentRoomIndex);
+    let returnedRoomInfoString = "I don't really know where you are right now, something has gone terribly wrong..." // default returned string
+    if (currentRoomIndex>0) {
+      if (currentRoomInfo.useLongRoomDescription) {
+        returnedRoomInfoString = currentRoomInfo.longDescription;
+        modifyRoomInfo (currentRoomIndex,'useLongRoomDescription',false) // create modify roomInfo function for this
       } else {
-        console.log(roomInfo[currentRoomIndex].shortDescription);
+        returnedRoomInfoString = currentRoomInfo.shortDescription;
       }
     }
+    return returnedRoomInfoString
   }
   
   function waitForUserInput() {
@@ -37,7 +30,7 @@ function findCurrentRoomIndex(room) {
   }
   
   function testUserInputAgainstAllowedActions (proposedActionPhrase, currentRoom) {
-    let currentRoomIndex = findCurrentRoomIndex(currentRoom)
+    let currentRoomIndex = findCurrentRoomIndexByName(currentRoom)
     let allowedActions = roomInfo[currentRoomIndex].roomActions;
     let returnedAction=false;
     let i=0;
@@ -63,7 +56,7 @@ function findCurrentRoomIndex(room) {
 
 function lookAt (inspectedObject, currentRoom, newRoomFlag) {
   let alive=true;  
-  let currentRoomIndex = findCurrentRoomIndex(currentRoom);
+  let currentRoomIndex = findCurrentRoomIndexByName(currentRoom);
   let allowedInventoryItems = roomInfo[currentRoomIndex].inventory;
   for (let i=0; i<allowedInventoryItems.length; i++) {
     if (inspectedObject.includes(allowedInventoryItems[i].inventoryName)) {
@@ -82,7 +75,7 @@ function lookAt (inspectedObject, currentRoom, newRoomFlag) {
     }
   }
   roomInfo[currentRoomIndex].useLongRoomDescription=true;
-  displayCurrentRoomInfo(currentRoom);
+  console.log(displayCurrentRoomInfo(currentRoom)); //need to output this to screen from where its called
   return [currentRoom, newRoomFlag, alive];
   }
 
@@ -100,12 +93,12 @@ function look (inspectedObject, currentRoom, newRoomFlag) {  // same function as
 
   function move (direction, currentRoom, newRoomFlag) {
     let alive = true;
-    let currentRoomIndex = findCurrentRoomIndex(currentRoom);
+    let currentRoomIndex = findCurrentRoomIndexByName(currentRoom);
     let allowedAdjacentRooms = roomInfo[currentRoomIndex].adjacentRooms;
     for (let i=0; i<allowedAdjacentRooms.length; i++) {
       if (direction.includes(allowedAdjacentRooms[i].direction)) {
           newRoomFlag = true;
-          let adjacentRoomIndex=findCurrentRoomIndex(allowedAdjacentRooms[i].adjacentRoomName);
+          let adjacentRoomIndex=findCurrentRoomIndexByName(allowedAdjacentRooms[i].adjacentRoomName);
           console.log (`Moving ${direction} to ${roomInfo[adjacentRoomIndex].shortDescription}`);
           return [allowedAdjacentRooms[i].adjacentRoomName, newRoomFlag, alive];
       }
@@ -132,7 +125,7 @@ function go (direction, currentRoom, newRoomFlag) {  // same function call as mo
   function pocket (action, currentRoom, newRoomFlag) {
     let alive=true;
 
-    let currentRoomIndex = findCurrentRoomIndex(currentRoom);
+    let currentRoomIndex = findCurrentRoomIndexByName(currentRoom);
     for (let i=0; i<roomInfo[currentRoomIndex].inventory.length; i++) {
       console.log(`${roomInfo[currentRoomIndex].inventory[i].inventoryQuantity} ${roomInfo[currentRoomIndex].inventory[i].inventoryName}`)
     }
@@ -147,7 +140,7 @@ function go (direction, currentRoom, newRoomFlag) {  // same function call as mo
   
   function get (itemToPickup, currentRoom, newRoomFlag) {
     let alive=true;
-    let currentRoomIndex = findCurrentRoomIndex(currentRoom);
+    let currentRoomIndex = findCurrentRoomIndexByName(currentRoom);
     let allowedInventoryItems = roomInfo[currentRoomIndex].inventory;
     for (let i=0; i<allowedInventoryItems.length; i++) {
       if (itemToPickup.includes(allowedInventoryItems[i].inventoryName)) {
@@ -196,7 +189,7 @@ function pick (itemToPickup, currentRoom, newRoomFlag) {
 
 function drop (itemToDrop, currentRoom, newRoomFlag) {
   let alive=true;
-  let currentRoomIndex = findCurrentRoomIndex(currentRoom);
+  let currentRoomIndex = findCurrentRoomIndexByName(currentRoom);
   let allowedInventoryItems = roomInfo[0].inventory;
   for (let i=0; i<allowedInventoryItems.length; i++) {
     if (itemToDrop.includes(allowedInventoryItems[i].inventoryName)) {
@@ -234,7 +227,7 @@ return [currentRoom, newRoomFlag, alive];
 function help (itemToPickup, currentRoom, newRoomFlag) {
   let helpString='Welcome to Adventure (the Game).  In this game you can type in verbs and nouns to do things.  Some examples of the available verbs are:\n';
   let alive=true;
-  let currentRoomIndex = findCurrentRoomIndex(currentRoom);
+  let currentRoomIndex = findCurrentRoomIndexByName(currentRoom);
   let currentRoomActions = roomInfo[currentRoomIndex].roomActions;
   for (let i=0; i<currentRoomActions.length-1; i++) {
     helpString=helpString+currentRoomActions[i]+', \n';
@@ -244,8 +237,11 @@ function help (itemToPickup, currentRoom, newRoomFlag) {
   return [currentRoom, newRoomFlag, alive];
 }
 
-  module.exports = {findCurrentRoomIndex,
-                    displayCurrentRoomInfo,
+function endGame() {
+  return ("Oops, you've passed on somehow (but its probably better than math class).");
+}
+
+  module.exports = {displayCurrentRoomInfo,
                     waitForUserInput,
                     testUserInputAgainstAllowedActions,
                     nounToApplyTheAllowedActionTo,
@@ -262,5 +258,6 @@ function help (itemToPickup, currentRoom, newRoomFlag) {
                     climb,
                     drop,
                     secret,
-                    pick
+                    pick,
+                    endGame
                 };
