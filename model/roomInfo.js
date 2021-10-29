@@ -1,6 +1,7 @@
 
 
-let roomInfo=[{ roomName: 'me',
+let roomInfo=[
+                { roomName: 'me',
                 longDescription:    "You are tall, possibly handsome and definitely lanky.  Not sure exactly what you are but lets just say you aren't a troll or a teacher.\n" +
                                     "I think there are some things in your pockets.",
                 shortDescription: 'Me!',
@@ -100,8 +101,34 @@ function getCurrentRoomDetails (roomIndex) {
     return roomInfo[roomIndex];
 }
 
-function modifyRoomInfo (roomIndex,attributeToModify, newValue) {
-    roomInfo[roomIndex][attributeToModify]=newValue;
+/* const getNestedObject = (nestedObj, pathArr) => {//
+    return pathArr.reduce((obj, key) =>
+        (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
+}
+ */
+/**
+ * @obj: the json object to change
+ * @access: string dot separates route to value
+ * @value: new valu
+ */
+ function setValue(obj,access,value){ // stolen off the internet, this allows me to change a nested value by supplying an array of attributes to get there
+    if (typeof(access)=='string'){
+        access = access.split('.');
+    }
+    if (access.length > 1){
+        setValue(obj[access.shift()],access,value);
+    }else{
+        obj[access[0]] = value;
+    }
+}
+
+function modifyRoomInfo (attributeToModifyArray, newValue) {
+    let access = '';
+    for (let i=0; i<attributeToModifyArray.length; i++) {
+        access = access + attributeToModifyArray[i]+'.';
+    }
+    let accessTwo = access.slice (0,access.length-1)
+    setValue(roomInfo,accessTwo,newValue);
 }
 
 module.exports =    {roomInfo,

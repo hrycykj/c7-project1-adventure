@@ -3,20 +3,30 @@ const adventureFunctions = require('../model/adventureFunctions');
 const express = require('express')
 const router = express.Router()
 
-/*router.get('/startGame', (req, res) => {
-    mainGame()
-    res.send('this is the end, my friend.')
-})*/
+router.get('/gameHelp', (req, res) => {
+    res.send(adventureFunctions.gameHelp());
+})
 
-/* router.get('/help', async (req, res) => {
-    res.json(adventureFunctions.help())
-})*/
+router.get('/startGame', (req, res) => {
+    currentRoom='forest';
+    isMeAlive=true;
+    whileRoomIsNew=true;
 
-/*router.get('/move', async (req, res) => {
-    let room = req.query.room 
-    hideAndSeek.move(room)
-    res.send('You have moved to the ' + room + '\n')
-})*/
+    res.send (adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n');
+    whileRoomIsNew=false;
+    
+})
+
+router.get('/waitForUserInput', (req, res) => {
+    if (isMeAlive) {
+        let userInput = req.query.inputAction;
+        let outputToScreen = `Hey there, this is what you typed: ${userInput}`;
+        res.send(outputToScreen+'\n');
+    } else {
+        res.send('Hm, looks like you are already dead, not sure how that happened.\n');
+        return;
+    }
+})
 
 /*router.get('/look', (req, res) => {
     let seekerLocation = hideAndSeek.look()
@@ -41,16 +51,6 @@ const router = express.Router()
     res.send(message + '\n')
 })*/
 
-router.get('/startGame', (req, res) => {
-    let currentRoom='forest';
-    let isMeAlive=true;
-    let whileRoomIsNew=true;
-
-    res.send (adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n');
-    whileRoomIsNew=false;
-    
-})
-
 router.get('/endGame', (req, res) => {
     res.send (adventureFunctions.endGame()+'\n');
     isMeAlive = false;
@@ -60,7 +60,8 @@ router.get('/endGame', (req, res) => {
 router.get('/', (req, res) => {
     let instructions = 
 `Welcome to Adventure (the Game).
-    In this game you can type in verbs and nouns to do things.  If you need some help, try using /help`
+    In this game you can type in verbs and nouns to do things.  If you need some help, try using /gameHelp.
+    Use /waitForUserInput?inputAction=verbs+nouns to enter your commands (use + instead of spaces)\n`
     res.send(instructions)
 })
 
