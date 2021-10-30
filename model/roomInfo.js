@@ -45,7 +45,7 @@ let roomInfo=[
                 },
                 { roomName: 'upAPineTree',
                 longDescription:    "You've managed to climb up one of the pine trees.  You see above you an eagle's nest, you think you might be able to get there\n" + 
-                                    "if your reach a little further but it looks kind of dodgy.  Off in the distance you see a house in a small clearing.  Hanging\n" +
+                                    "if you reach a little further but it looks kind of dodgy.  Off in the distance you see a house in a small clearing.  Hanging\n" +
                                     "off one of the branches is a golden necklace.",
                 shortDescription: 'Up a pine tree',
                 useLongRoomDescription: true,
@@ -73,7 +73,7 @@ let roomInfo=[
                             "(when did they start teaching PDEs in Grade 3) with a large red F prominently on the front.  You turn it\n"+
                             "over and notice something scrawled on the back 'did you find the axe in the forest?  Its hidden!'  It looks like your handwriting.",inventoryShortDescription: 'PDE Math Test',inventoryQuantity: 1, useLongInventoryDescription: true}
                             ],
-                roomActions: ['go','move','get','pick','drop', 'look', 'help', 'secret']
+                roomActions: ['go','move', 'climb','get','pick','drop', 'look', 'help', 'secret']
                 },
                 { roomName: 'inFrontOfAHouse',
                 longDescription:    "You are standing in front of a large two story house with a big wrap around porch.  It looks like the main door is open (you can\n" +
@@ -152,8 +152,7 @@ function removeRoomInfo (attributeToModifyArray, arrayIndexToSplice) {
 }
 
 
-module.exports =    {roomInfo,
-                    findCurrentRoomIndexByName,
+module.exports =    {findCurrentRoomIndexByName,
                     getCurrentRoomDetails,
                     modifyRoomInfo,
                     addRoomInfo,

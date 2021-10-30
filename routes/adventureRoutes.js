@@ -14,7 +14,6 @@ router.get('/startGame', (req, res) => {
 
     res.send (adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n');
     whileRoomIsNew=false;
-    
 })
 
 router.get('/waitForUserInput', (req, res) => {
@@ -22,6 +21,18 @@ router.get('/waitForUserInput', (req, res) => {
         let userInput = req.query.inputAction;
         let outputToScreen = `Hey there, this is what you typed: ${userInput}`;
         res.send(outputToScreen+'\n');
+        let returnedOutputString='';
+        [currentRoom, whileRoomIsNew, isMeAlive, returnedOutputString] = adventureFunctions.parseAndExecuteActionPhrase(userInput,currentRoom,whileRoomIsNew);
+        res.send(returnedOutputString+'\n');
+        if (!isMeAlive) {
+            res.send(adventureFunctions.endGame());
+        } else {
+            if (whileRoomIsNew) {
+                res.send (adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n');
+                whileRoomIsNew=false;
+            }
+        }
+        return;
     } else {
         res.send('Hm, looks like you are already dead, not sure how that happened.\n');
         return;
@@ -60,8 +71,11 @@ router.get('/endGame', (req, res) => {
 router.get('/', (req, res) => {
     let instructions = 
 `Welcome to Adventure (the Game).
-    In this game you can type in verbs and nouns to do things.  If you need some help, try using /gameHelp.
-    Use /waitForUserInput?inputAction=verbs+nouns to enter your commands (use + instead of spaces)\n`
+    In this game you can type in verbs and nouns to do things.  
+    If you need some help, try using /gameHelp.
+    Use /startGame to initialize the data for the game.
+    Use /waitForUserInput?inputAction=verbs+nouns to enter your commands (use + instead of spaces).
+    Use /endGame to stop the game.\n`
     res.send(instructions)
 })
 

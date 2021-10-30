@@ -1,6 +1,5 @@
 const prompt = require('prompt-sync')({sigint: true}); //run npm install prompt-sync in the terminal to make sure this will work, prompt is used in waitForUserInput function
-let {roomInfo,
-    findCurrentRoomIndexByName,
+let {findCurrentRoomIndexByName,
     getCurrentRoomDetails,
     modifyRoomInfo,
     addRoomInfo,
@@ -30,6 +29,29 @@ let whileRoomIsNew;
     return returnedRoomInfoString
   }
   
+  function parseAndExecuteActionPhrase (actionPhrase, currentRoom, whileRoomIsNew) {  
+    let isMeAlive = true;
+    let actionNoun='';
+    let allowedRoomAction=false;
+    let allowedMeAction=false;
+    let returnedOutputString='';
+    allowedRoomAction=testUserInputAgainstAllowedActions (actionPhrase, currentRoom);
+    allowedMeAction=testUserInputAgainstAllowedActions (actionPhrase, 'me');
+    if (!(allowedRoomAction||allowedMeAction)) {
+      returnedOutputString="I'm sorry you'll have to speak up, I didn't hear that";  //add random response generator for actions that aren't allowed
+    } 
+      else if (allowedMeAction) {
+        let meRoom='me'
+        actionNoun = nounToApplyTheAllowedActionTo (actionPhrase, allowedMeAction);
+        [meRoom,whileRoomIsNew,isMeAlive,returnedOutputString] = this[allowedMeAction] (actionNoun,meRoom,whileRoomIsNew)
+      }
+      else if (allowedRoomAction) {
+        actionNoun = nounToApplyTheAllowedActionTo (actionPhrase, allowedRoomAction);
+        [currentRoom,whileRoomIsNew,isMeAlive,returnedOutputString] = this[allowedRoomAction] (actionNoun,currentRoom,whileRoomIsNew)
+      }
+      return [currentRoom,whileRoomIsNew,isMeAlive,returnedOutputString];
+    }
+
   function waitForUserInput() { // not used in server calls version in adventureRoutes.js
     let userInput=prompt('>>');
     console.log(`Hey there, this is what you typed: ${userInput}`);
@@ -143,8 +165,8 @@ function listInventory (action, currentRoom, newRoomFlag) {
   let alive=true;
   let currentRoomIndex = findCurrentRoomIndexByName(currentRoom);
   let returnedInventoryString ='This is what I found:\n'
-  for (let i=0; i<roomInfo[currentRoomIndex].inventory.length; i++) {
-    returnedInventoryString +=`${roomInfo[currentRoomIndex].inventory[i].inventoryQuantity} ${roomInfo[currentRoomIndex].inventory[i].inventoryName}\n`;
+  for (let i=0; i<getCurrentRoomDetails(currentRoomIndex).inventory.length; i++) {
+    returnedInventoryString +=`${getCurrentRoomDetails(currentRoomIndex).inventory[i].inventoryQuantity} ${getCurrentRoomDetails(currentRoomIndex).inventory[i].inventoryName}\n`;
   }
   return [currentRoom, newRoomFlag, alive, returnedInventoryString];
 }
@@ -193,7 +215,7 @@ function get (itemToPickup, currentRoom, newRoomFlag) {
         let roomQuantity = allowedInventoryItems[i].inventoryQuantity + 1; // negative inventory items won't let you look at them, but you can pick them up then look at them
         modifyRoomInfo ([currentRoomIndex,'inventory',i,'inventoryQuantity'],roomQuantity);
         // roomInfo[currentRoomIndex].inventory[i].inventoryQuantity++; // modified to use modifyRoomInfo function
-        for (let j=0; j<roomInfo[0].inventory.length; j++) {
+        for (let j=0; j<getCurrentRoomDetails(0).inventory.length; j++) {
           if (getCurrentRoomDetails(0).inventory[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) {
             let meQuantity = getCurrentRoomDetails(0).inventory[j].inventoryQuantity+1;
             modifyRoomInfo ([0,'inventory',j,'inventoryQuantity'],meQuantity);
@@ -256,7 +278,7 @@ function get (itemToPickup, currentRoom, newRoomFlag) {
               inventoryQuantity: 1};
               addRoomInfo ([currentRoomIndex,'inventory'],droppedItem);
               // roomInfo[currentRoomIndex].inventory.unshift(pickedUpItem);
-              if (roomInfo[0].inventory[i].inventoryQuantity<1) {
+              if (allowedInventoryItems[i].inventoryQuantity<1) {
                 removeRoomInfo ([0,'inventory'],i);
                 // roomInfo[0].inventory.splice(i,1);
               }
@@ -301,6 +323,7 @@ function get (itemToPickup, currentRoom, newRoomFlag) {
       
       module.exports = {displayCurrentRoomInfo,
                     waitForUserInput,
+                    parseAndExecuteActionPhrase,
                     testUserInputAgainstAllowedActions,
                     nounToApplyTheAllowedActionTo,
                     lookAt,
