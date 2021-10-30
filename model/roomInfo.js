@@ -65,7 +65,8 @@ let roomInfo=[
                                 {direction: 'east' ,adjacentRoomName: 'yourClassroom'},
                                 {direction: 'north' ,adjacentRoomName: 'yourClassroom'},
                                 {direction: 'south' ,adjacentRoomName: 'yourClassroom'},
-                                {direction: 'under desk', adjacentRoomName: 'forest'}
+                                {direction: 'under desk', adjacentRoomName: 'forest'},
+                                {direction: 'under the desk', adjacentRoomName: 'forest'}
                                 ],
                 inventory: [{inventoryName: 'pencil',inventoryLongDescription: "A fine HB yellow pencil with a few teeth marks",inventoryShortDescription: 'HB pencil',inventoryQuantity: 1, useLongInventoryDescription: true},
                             {inventoryName: 'test',inventoryLongDescription: "It looks like your last partial differential equations exam\n" +
@@ -130,6 +131,14 @@ function unshiftValue(obj,access,objectValue) {
     }
 }
 
+function spliceValue(obj,access,spliceArrayIndex) {
+    if (access.length > 1) {
+        spliceValue (obj[access.shift()],access,spliceArrayIndex);
+    } else {
+        obj[access].splice(spliceArrayIndex,1);
+    }
+}
+
 function modifyRoomInfo (attributeToModifyArray, newValue) {
     setValue(roomInfo,attributeToModifyArray,newValue);
 }
@@ -138,10 +147,14 @@ function addRoomInfo (attributeToModifyArray, newObjectValue) {
     unshiftValue (roomInfo, attributeToModifyArray, newObjectValue);
 }
 
+function removeRoomInfo (attributeToModifyArray, arrayIndexToSplice) {
+    spliceValue (roomInfo, attributeToModifyArray, arrayIndexToSplice);
+}
 
 
 module.exports =    {roomInfo,
                     findCurrentRoomIndexByName,
                     getCurrentRoomDetails,
                     modifyRoomInfo,
-                    addRoomInfo};
+                    addRoomInfo,
+                    removeRoomInfo};

@@ -3,7 +3,8 @@ let {roomInfo,
     findCurrentRoomIndexByName,
     getCurrentRoomDetails,
     modifyRoomInfo,
-    addRoomInfo} = require('./roomInfo');
+    addRoomInfo,
+    removeRoomInfo} = require('./roomInfo');
 
 let currentRoom;
 let isMeAlive;
@@ -224,38 +225,48 @@ function get (itemToPickup, currentRoom, newRoomFlag) {
     
     function drop (itemToDrop, currentRoom, newRoomFlag) {
       let alive=true;
+      let stringToReturn = '';
       let currentRoomIndex = findCurrentRoomIndexByName(currentRoom);
-      let allowedInventoryItems = roomInfo[0].inventory;
+      let allowedInventoryItems = getCurrentRoomDetails(0).inventory;
       for (let i=0; i<allowedInventoryItems.length; i++) {
         if (itemToDrop.includes(allowedInventoryItems[i].inventoryName)) {
           if (allowedInventoryItems[i].inventoryQuantity<1) {
-            console.log (`I don't seem to have a ${allowedInventoryItems[i].inventoryName}, better check your pockets again`);
-            return [currentRoom, newRoomFlag, alive];
+            stringToReturn = `I don't seem to have a ${allowedInventoryItems[i].inventoryName}, better check your pockets again`;
+            return [currentRoom, newRoomFlag, alive,stringToReturn];
           } else {
-            roomInfo[0].inventory[i].inventoryQuantity--;
-            for (let j=0; j<roomInfo[currentRoomIndex].inventory.length; j++) {
-              if (roomInfo[currentRoomIndex].inventory[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) {
-                roomInfo[currentRoomIndex].inventory[j].inventoryQuantity++;
-                if (roomInfo[0].inventory[i].inventoryQuantity<1) {
-                  roomInfo[0].inventory.splice(i,1);
+            let meQuantity = allowedInventoryItems[i].inventoryQuantity-1;
+            modifyRoomInfo ([0,'inventory',i,'inventoryQuantity'],meQuantity);
+            //roomInfo[0].inventory[i].inventoryQuantity--;
+            let stringToReturn = `You've dropped a ${allowedInventoryItems[i].inventoryName} here in ${getCurrentRoomDetails(currentRoomIndex).shortDescription}.`;
+            let currentRoomInventoryItems = getCurrentRoomDetails (currentRoomIndex).inventory;
+            for (let j=0; j<currentRoomInventoryItems.length; j++) {
+              if (currentRoomInventoryItems[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) {
+                let roomQuantity = currentRoomInventoryItems[j].inventoryQuantity + 1;
+                modifyRoomInfo ([currentRoomIndex, 'inventory',j,'inventoryQuantity'], roomQuantity);
+                // roomInfo[currentRoomIndex].inventory[j].inventoryQuantity++;
+                if (getCurrentRoomDetails(0).inventory[i].inventoryQuantity<1) { // roomInfo[0].inventory[i].inventoryQuantity<1) {
+                  removeRoomInfo ([0,'inventory'],i);
+                  // roomInfo[0].inventory.splice(i,1);
                 }
-                return [currentRoom, newRoomFlag, alive];
+                return [currentRoom, newRoomFlag, alive, stringToReturn];
               }
             }
-            let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
+            let droppedItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
               inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
               inventoryQuantity: 1};
-              roomInfo[currentRoomIndex].inventory.unshift(pickedUpItem);
+              addRoomInfo ([currentRoomIndex,'inventory'],droppedItem);
+              // roomInfo[currentRoomIndex].inventory.unshift(pickedUpItem);
               if (roomInfo[0].inventory[i].inventoryQuantity<1) {
-                roomInfo[0].inventory.splice(i,1);
+                removeRoomInfo ([0,'inventory'],i);
+                // roomInfo[0].inventory.splice(i,1);
               }
-              return [currentRoom, newRoomFlag, alive];
+              return [currentRoom, newRoomFlag, alive, stringToReturn];
             }
           }
         }
         
-        console.log (`--I can't seem to find a ${itemToDrop}, are you sure you actually have one?`);
-        return [currentRoom, newRoomFlag, alive];
+        stringToReturn = `--I can't seem to find a ${itemToDrop}, are you sure you actually have one?`;
+        return [currentRoom, newRoomFlag, alive, stringToReturn];
       }
       
       
