@@ -19,18 +19,20 @@ router.get('/startGame', (req, res) => {
 router.get('/waitForUserInput', (req, res) => {
     if (isMeAlive) {
         let userInput = req.query.inputAction;
-        let outputToScreen = `Hey there, this is what you typed: ${userInput}`;
-        res.send(outputToScreen+'\n');
+        let outputToScreen = `Hey there, this is what you typed: ${userInput}\n`;
+        // res.send(outputToScreen+'\n');
         let returnedOutputString='';
+        let newRoomStringOutput='';
         [currentRoom, whileRoomIsNew, isMeAlive, returnedOutputString] = adventureFunctions.parseAndExecuteActionPhrase(userInput,currentRoom,whileRoomIsNew);
-        res.send(returnedOutputString+'\n');
         if (!isMeAlive) {
-            res.send(adventureFunctions.endGame());
+            res.send(outputToScreen+returnedOutputString+'\n'+adventureFunctions.endGame());
+            return;
         } else {
             if (whileRoomIsNew) {
-                res.send (adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n');
+                newRoomStringOutput = adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n';
                 whileRoomIsNew=false;
             }
+            res.send(outputToScreen+returnedOutputString+'\n'+newRoomStringOutput);
         }
         return;
     } else {
