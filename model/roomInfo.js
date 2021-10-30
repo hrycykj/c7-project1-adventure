@@ -14,8 +14,8 @@ let roomInfo=[
                 },
                 { roomName: 'forest',
                 longDescription:    "You find yourself in a dark forest wondering why you are here right now.  You really should be in class working on your math homework.\n" +
-                                    "You look around and you see a squirrel running up your leg (he must be thinking there might be nuts or pinecones in your pockets) and\n" +
-                                    "lots and lots of pinecones.",
+                                    "You look around and you see a squirrel running up your leg (he must be thinking there might be nuts or pine cones in your pockets) and\n" +
+                                    "lots and lots of pine cones.",
                 shortDescription: 'A dark forest',
                 useLongRoomDescription: true,
                 adjacentRooms: [{direction: 'north' ,adjacentRoomName: 'inFrontOfAHouse'},
@@ -23,8 +23,8 @@ let roomInfo=[
                                 {direction: 'east', adjacentRoomName: 'moreForestLost'},
                                 {direction: 'south', adjacentRoomName: 'yourClassroom'}
                                 ],
-                inventory: [{inventoryName: 'pine cone',inventoryLongDescription: 'There seem to be many pinecones littering the forest floor around your feet.',inventoryShortDescription: 'pinecones',inventoryQuantity: 5, useLongInventoryDescription: true},
-                            {inventoryName: 'squirrel',inventoryLongDescription: 'A squirrel is foraging among the pinecones so they can hide food away for winter.',inventoryShortDescription: 'squirrel',inventoryQuantity: 0, useLongInventoryDescription: true},
+                inventory: [{inventoryName: 'pine cone',inventoryLongDescription: 'There seem to be many pine cones littering the forest floor around your feet.',inventoryShortDescription: 'pine cones',inventoryQuantity: 5, useLongInventoryDescription: true},
+                            {inventoryName: 'squirrel',inventoryLongDescription: 'A squirrel is foraging among the pine cones so they can hide food away for winter.',inventoryShortDescription: 'squirrel',inventoryQuantity: 0, useLongInventoryDescription: true},
                             {inventoryName: 'axe',inventoryLongDescription: "wow, this is a really mean looking axe, it really reminds me of the axe that hung above our front door in our suburban front\n" +
                             "garage house.  I think dad called it 'boyfriend slayer'!", inventoryShortDescription: 'badass axe', inventoryQuantity: -2, useLongInventoryDescription: true}
                             ],
@@ -32,13 +32,13 @@ let roomInfo=[
                 },
                 { roomName: 'moreForestLost',
                 longDescription:    "Hm, the forest seems much thicker here.  Wait a second, its much darker too.  Ok, now you've done it, your lost in the forest.\n" + 
-                                    "The squirrels have followed you here even though there aren't any pinecones around, just pine needles.",
+                                    "The squirrels have followed you here even though there aren't any pine cones around, just pine needles.",
                 shortDescription: 'A much darker part of the forest',
                 useLongRoomDescription: true,
                 adjacentRooms: [{direction: 'up' ,adjacentRoomName: 'upAPineTree'},
                                 {direction: 'tree', adjacentRoomName: 'upAPineTree'}
                                 ],
-                inventory: [{inventoryName: 'pine needle',inventoryLongDescription: "Its pretty dark here but as you feel around at your feet you don't find any pinecones, but lots and lots of pine needles.  Ouch, they're sharp.",inventoryShortDescription: 'pine needles',inventoryQuantity: 0, useLongInventoryDescription: true},
+                inventory: [{inventoryName: 'pine needle',inventoryLongDescription: "Its pretty dark here but as you feel around at your feet you don't find any pine cones, but lots and lots of pine needles.  Ouch, they're sharp.",inventoryShortDescription: 'pine needles',inventoryQuantity: 0, useLongInventoryDescription: true},
                             {inventoryName: 'squirrel',inventoryLongDescription: "This squirrel looks almost nasty.  Hey wait, those teeth look more like wolf's teeth than squirrel teeth.",inventoryShortDescription: 'squirrel',inventoryQuantity: 0, useLongInventoryDescription: true}
                             ],
                 roomActions: ['go','move','get','pick', 'drop', 'look', 'help', 'climb', 'secret']
@@ -112,26 +112,36 @@ function getCurrentRoomDetails (roomIndex) {
  * @value: new valu
  */
  function setValue(obj,access,value){ // stolen off the internet, this allows me to change a nested value by supplying an array of attributes to get there
-    if (typeof(access)=='string'){
-        access = access.split('.');
+    if (typeof(access)=='string'){ 
+        access = access.split('.');  // turns dot notated string into an array
     }
-    if (access.length > 1){
+    if (access.length > 1){  // if access array still has more than one item it recursively calls setValue
         setValue(obj[access.shift()],access,value);
     }else{
-        obj[access[0]] = value;
+        obj[access[0]] = value; // once you get down to the last access array item, it sets it to the value
+    }
+}
+
+function unshiftValue(obj,access,objectValue) {
+    if (access.length > 1){
+        unshiftValue(obj[access.shift()],access,objectValue);
+    } else {
+        obj[access].unshift(objectValue);
     }
 }
 
 function modifyRoomInfo (attributeToModifyArray, newValue) {
-    let access = '';
-    for (let i=0; i<attributeToModifyArray.length; i++) {
-        access = access + attributeToModifyArray[i]+'.';
-    }
-    let accessTwo = access.slice (0,access.length-1)
-    setValue(roomInfo,accessTwo,newValue);
+    setValue(roomInfo,attributeToModifyArray,newValue);
 }
+
+function addRoomInfo (attributeToModifyArray, newObjectValue) {
+    unshiftValue (roomInfo, attributeToModifyArray, newObjectValue);
+}
+
+
 
 module.exports =    {roomInfo,
                     findCurrentRoomIndexByName,
                     getCurrentRoomDetails,
-                    modifyRoomInfo};
+                    modifyRoomInfo,
+                    addRoomInfo};

@@ -2,7 +2,8 @@ const prompt = require('prompt-sync')({sigint: true}); //run npm install prompt-
 let {roomInfo,
     findCurrentRoomIndexByName,
     getCurrentRoomDetails,
-    modifyRoomInfo} = require('./roomInfo');
+    modifyRoomInfo,
+    addRoomInfo} = require('./roomInfo');
 
 let currentRoom;
 let isMeAlive;
@@ -161,51 +162,64 @@ function secret (action, currentRoom, newRoomFlag) { //returns the current rooms
 
 function get (itemToPickup, currentRoom, newRoomFlag) {
   let alive=true;
+  let stringToReturn='';
   let currentRoomIndex = findCurrentRoomIndexByName(currentRoom);
-  let allowedInventoryItems = roomInfo[currentRoomIndex].inventory;
+  let allowedInventoryItems = getCurrentRoomDetails(currentRoomIndex).inventory;
   for (let i=0; i<allowedInventoryItems.length; i++) {
     if (itemToPickup.includes(allowedInventoryItems[i].inventoryName)) {
       if (allowedInventoryItems[i].inventoryQuantity==0) {
-        console.log (`I can't seem to pick up the ${allowedInventoryItems[i].inventoryName}, are you sure its actually here?`);
-        return [currentRoom, newRoomFlag, alive];
+        stringToReturn = `I can't seem to pick up the ${allowedInventoryItems[i].inventoryName}, are you sure its actually here?`;
+        return [currentRoom, newRoomFlag, alive, stringToReturn];
       } else if (allowedInventoryItems[i].inventoryQuantity>0) {
-        roomInfo[currentRoomIndex].inventory[i].inventoryQuantity--;
-        for (let j=0; j<roomInfo[0].inventory.length; j++) {
-          if (roomInfo[0].inventory[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) {
-            roomInfo[0].inventory[j].inventoryQuantity++
-            return [currentRoom, newRoomFlag, alive];
+        let roomQuantity = allowedInventoryItems[i].inventoryQuantity - 1;
+        modifyRoomInfo ([currentRoomIndex,'inventory',i,'inventoryQuantity'],roomQuantity);
+        for (let j=0; j<getCurrentRoomDetails(0).inventory.length; j++) {
+          if (getCurrentRoomDetails(0).inventory[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) { //change to get roomInfo for Me
+            let meQuantity = getCurrentRoomDetails(0).inventory[j].inventoryQuantity+1;
+            modifyRoomInfo ([0,'inventory',j,'inventoryQuantity'],meQuantity);
+            stringToReturn = `you've picked up the ${allowedInventoryItems[i].inventoryName}\n`;
+            return [currentRoom, newRoomFlag, alive, stringToReturn];
           }
         }
         let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
           inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
           inventoryQuantity: 1};
-          roomInfo[0].inventory.unshift(pickedUpItem);
-          return [currentRoom, newRoomFlag, alive];
-        } else if (allowedInventoryItems[i].inventoryQuantity<0) {
-          roomInfo[currentRoomIndex].inventory[i].inventoryQuantity++; // negative inventory items won't let you look at them, but you can pick them up then look at them
-          for (let j=0; j<roomInfo[0].inventory.length; j++) {
-            if (roomInfo[0].inventory[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) {
-              roomInfo[0].inventory[j].inventoryQuantity++
-              return [currentRoom, newRoomFlag, alive];
-            }
+          addRoomInfo ([0,'inventory'],pickedUpItem);
+          // roomInfo[0].inventory.unshift(pickedUpItem);
+          stringToReturn = `.you've picked up the ${allowedInventoryItems[i].inventoryName}\n`;
+          return [currentRoom, newRoomFlag, alive, stringToReturn];
+      } else if (allowedInventoryItems[i].inventoryQuantity<0) {
+        let roomQuantity = allowedInventoryItems[i].inventoryQuantity + 1; // negative inventory items won't let you look at them, but you can pick them up then look at them
+        modifyRoomInfo ([currentRoomIndex,'inventory',i,'inventoryQuantity'],roomQuantity);
+        // roomInfo[currentRoomIndex].inventory[i].inventoryQuantity++; // modified to use modifyRoomInfo function
+        for (let j=0; j<roomInfo[0].inventory.length; j++) {
+          if (getCurrentRoomDetails(0).inventory[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) {
+            let meQuantity = getCurrentRoomDetails(0).inventory[j].inventoryQuantity+1;
+            modifyRoomInfo ([0,'inventory',j,'inventoryQuantity'],meQuantity);
+            stringToReturn = `..you've picked up the ${allowedInventoryItems[i].inventoryName}\n`;
+            //roomInfo[0].inventory[j].inventoryQuantity++ //use modifyRoomInfo function
+            return [currentRoom, newRoomFlag, alive, stringToReturn];
           }
-          let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
-            inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
-            inventoryQuantity: 1};
-            roomInfo[0].inventory.unshift(pickedUpItem);
-            return [currentRoom, newRoomFlag, alive];
-          }
+        }
+        let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
+          inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
+          inventoryQuantity: 1};
+          addRoomInfo ([0,'inventory'],pickedUpItem);
+          // roomInfo[0].inventory.unshift(pickedUpItem);
+          stringToReturn = `...you've picked up the ${allowedInventoryItems[i].inventoryName}\n`;
+          return [currentRoom, newRoomFlag, alive,stringToReturn];
+        }
         }
       }
       
-      console.log (`--I can't seem to pick up the ${itemToPickup}, are you sure its actually here?`);
-      return [currentRoom, newRoomFlag, alive];
+      stringToReturn = `--I can't seem to pick up the ${itemToPickup}, are you sure its actually here?`;
+      return [currentRoom, newRoomFlag, alive, stringToReturn];
     }
     
     function pick (itemToPickup, currentRoom, newRoomFlag) {
       let alive = true;
-      get (itemToPickup, currentRoom, newRoomFlag);
-      return [currentRoom,newRoomFlag,alive];
+      let returnedString = get (itemToPickup, currentRoom, newRoomFlag);
+      return [currentRoom,newRoomFlag,alive,returnedString[3]];
     }
     
     function drop (itemToDrop, currentRoom, newRoomFlag) {
