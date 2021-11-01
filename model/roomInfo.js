@@ -94,11 +94,13 @@ let roomInfo=[
                 }
                 ];
 
-function findCurrentRoomIndexByName(room) {
+async function findCurrentRoomIndexByName(room) {
+    // console.log ('made it into find room index function',room)
     return roomInfo.findIndex (el=>el.roomName==room); //returns -1 if the room doesn't match any of the existing rooms
     }
 
-function getCurrentRoomDetails (roomIndex) {
+async function getCurrentRoomDetails (roomIndex) {
+    // console.log ('made it into get current room details',roomIndex)
     return roomInfo[roomIndex];
 }
 
@@ -112,7 +114,7 @@ function getCurrentRoomDetails (roomIndex) {
  * @access: string dot separates route to value
  * @value: new valu
  */
- function setValue(obj,access,value){ // stolen off the internet, this allows me to change a nested value by supplying an array of attributes to get there
+ async function setValue(obj,access,value){ // stolen off the internet, this allows me to change a nested value by supplying an array of attributes to get there
     if (typeof(access)=='string'){ 
         access = access.split('.');  // turns dot notated string into an array
     }
@@ -123,7 +125,7 @@ function getCurrentRoomDetails (roomIndex) {
     }
 }
 
-function unshiftValue(obj,access,objectValue) {
+async function unshiftValue(obj,access,objectValue) {
     if (access.length > 1){
         unshiftValue(obj[access.shift()],access,objectValue);
     } else {
@@ -131,7 +133,7 @@ function unshiftValue(obj,access,objectValue) {
     }
 }
 
-function spliceValue(obj,access,spliceArrayIndex) {
+async function spliceValue(obj,access,spliceArrayIndex) {
     if (access.length > 1) {
         spliceValue (obj[access.shift()],access,spliceArrayIndex);
     } else {
@@ -139,15 +141,15 @@ function spliceValue(obj,access,spliceArrayIndex) {
     }
 }
 
-function modifyRoomInfo (attributeToModifyArray, newValue) {
+async function modifyRoomInfo (attributeToModifyArray, newValue) {
     setValue(roomInfo,attributeToModifyArray,newValue);
 }
 
-function addRoomInfo (attributeToModifyArray, newObjectValue) {
+async function addRoomInfo (attributeToModifyArray, newObjectValue) {
     unshiftValue (roomInfo, attributeToModifyArray, newObjectValue);
 }
 
-function removeRoomInfo (attributeToModifyArray, arrayIndexToSplice) {
+async function removeRoomInfo (attributeToModifyArray, arrayIndexToSplice) {
     spliceValue (roomInfo, attributeToModifyArray, arrayIndexToSplice);
 }
 

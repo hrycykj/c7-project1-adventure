@@ -2,11 +2,11 @@
 
 
 let adventureFunctions = require('./adventureFunctions');
-let {findCurrentRoomIndexByName,
-    getCurrentRoomDetails,
-    modifyRoomInfo,
-    addRoomInfo,
-    removeRoomInfo} = require('./roomInfo');
+// let {findCurrentRoomIndexByName,
+//     getCurrentRoomDetails,
+//     modifyRoomInfo,
+//     addRoomInfo,
+//     removeRoomInfo} = require('./roomInfo');
 
 
 
@@ -23,14 +23,14 @@ let whileRoomIsNew=true;
 
 
 //main start
-function mainGame() {
+async function mainGame() {
     while (isMeAlive) {
-      console.log (adventureFunctions.displayCurrentRoomInfo(currentRoom));
+      console.log (await adventureFunctions.displayCurrentRoomInfo(currentRoom));
       whileRoomIsNew=false;
       while (!whileRoomIsNew&&isMeAlive) {
         let actionPhrase='';
         actionPhrase = adventureFunctions.waitForUserInput();
-        [currentRoom, whileRoomIsNew, isMeAlive, returnedOutputString] = adventureFunctions.parseAndExecuteActionPhrase (actionPhrase, currentRoom, whileRoomIsNew);
+        [currentRoom, whileRoomIsNew, isMeAlive, returnedOutputString] = await adventureFunctions.parseAndExecuteActionPhrase (actionPhrase, currentRoom, whileRoomIsNew);
         console.log(returnedOutputString);
       }
     }

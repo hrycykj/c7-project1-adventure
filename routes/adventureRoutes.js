@@ -7,29 +7,29 @@ router.get('/gameHelp', (req, res) => {
     res.send(adventureFunctions.gameHelp());
 })
 
-router.get('/startGame', (req, res) => {
+router.get('/startGame', async (req, res) => {
     currentRoom='forest';
     isMeAlive=true;
     whileRoomIsNew=true;
 
-    res.send (adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n');
+    res.send (await adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n');
     whileRoomIsNew=false;
 })
 
-router.get('/waitForUserInput', (req, res) => {
+router.get('/waitForUserInput', async (req, res) => {
     if (isMeAlive) {
-        let userInput = req.query.inputAction;
+        let userInput = (req.query.inputAction||'');
         let outputToScreen = `Hey there, this is what you typed: ${userInput}\n`;
         // res.send(outputToScreen+'\n');
         let returnedOutputString='';
         let newRoomStringOutput='';
-        [currentRoom, whileRoomIsNew, isMeAlive, returnedOutputString] = adventureFunctions.parseAndExecuteActionPhrase(userInput,currentRoom,whileRoomIsNew);
+        [currentRoom, whileRoomIsNew, isMeAlive, returnedOutputString] = await adventureFunctions.parseAndExecuteActionPhrase(userInput,currentRoom,whileRoomIsNew);
         if (!isMeAlive) {
             res.send(outputToScreen+returnedOutputString+'\n'+adventureFunctions.endGame());
             return;
         } else {
             if (whileRoomIsNew) {
-                newRoomStringOutput = adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n';
+                newRoomStringOutput = await adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n';
                 whileRoomIsNew=false;
             }
             res.send(outputToScreen+returnedOutputString+'\n'+newRoomStringOutput);
@@ -40,29 +40,6 @@ router.get('/waitForUserInput', (req, res) => {
         return;
     }
 })
-
-/*router.get('/look', (req, res) => {
-    let seekerLocation = hideAndSeek.look()
-    let message = 'You are in the ' + seekerLocation.name + '\n'
-    message += 'Obvious hiding places are:\n'
-    seekerLocation.hidingSpots.forEach((hidingSpot) => {
-        message += '  ' + hidingSpot + '\n'
-    })
-    res.send(message)
-})*/
-
-/*router.get('/search', (req, res) => {
-    let message
-    let spot = req.query.spot  
-    let found = hideAndSeek.search(spot)
-    if (found) {
-        message = 'You just found the hider!'
-    }
-    else {
-       message = 'You search ' + spot + ' and find no-one!'
-    }
-    res.send(message + '\n')
-})*/
 
 router.get('/endGame', (req, res) => {
     res.send (adventureFunctions.endGame()+'\n');
