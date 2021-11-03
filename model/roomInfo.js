@@ -151,7 +151,7 @@ async function addRoomInfo (attributeToModifyArray, newObjectValue) {
 }
 
 async function removeRoomInfo (attributeToModifyArray, arrayIndexToSplice) {
-    spliceValue (roomInfo, attributeToModifyArray, arrayIndexToSplice);
+    spliceValue (roomInfo, attributeToModifyArray, arrayIndexToSplice[2]);
 }
 
 

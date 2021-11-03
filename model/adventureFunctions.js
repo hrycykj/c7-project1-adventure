@@ -25,7 +25,7 @@ async function displayCurrentRoomInfo(currentRoom) { // pulls current room info 
   if (currentRoomIndex>0) {
     if (currentRoomInfo.useLongRoomDescription) {
       returnedRoomInfoString = currentRoomInfo.longDescription;
-      modifyRoomInfo ([currentRoomIndex,'useLongRoomDescription'],false);
+      modifyRoomInfo ([currentRoomId,'useLongRoomDescription'],false);
     } else {
       returnedRoomInfoString = currentRoomInfo.shortDescription;
     }
@@ -210,7 +210,7 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
         let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
           inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
           inventoryQuantity: 1};
-          addRoomInfo ([meRoomId,'inventory'],pickedUpItem);
+          addRoomInfo ([meRoomId,'inventory',(await getCurrentRoomDetails(meRoomId)).inventory.length],pickedUpItem);
           stringToReturn = `.you've picked up the ${allowedInventoryItems[i].inventoryName}\n`;
           return [currentRoom, newRoomFlag, alive, stringToReturn];
       } else if (allowedInventoryItems[i].inventoryQuantity<0) {
@@ -227,7 +227,7 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
         let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
           inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
           inventoryQuantity: 1};
-          addRoomInfo ([meRoomId,'inventory'],pickedUpItem);
+          addRoomInfo ([meRoomId,'inventory',(await getCurrentRoomDetails(meRoomId)).inventory.length],pickedUpItem);
           stringToReturn = `...you've picked up the ${allowedInventoryItems[i].inventoryName}\n`;
           return [currentRoom, newRoomFlag, alive,stringToReturn];
         }
@@ -250,7 +250,7 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
       let [currentRoomIndex,currentRoomId] = await findCurrentRoomIndexByName(currentRoom);
       let [meRoomIndex, meRoomId] = await (findCurrentRoomIndexByName('me'));
       let allowedInventoryItems = (await getCurrentRoomDetails(meRoomId)).inventory;
-      for (let i=0; i<allowedInventoryItems.length; i++) {
+      for (let i=0; i<allowedInventoryItems.length; i++) { //  i = meRoom array index
         if (itemToDrop.includes(allowedInventoryItems[i].inventoryName)) {
           if (allowedInventoryItems[i].inventoryQuantity<1) {
             stringToReturn = `I don't seem to have a ${allowedInventoryItems[i].inventoryName}, better check your pockets again`;
@@ -260,12 +260,12 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
             modifyRoomInfo ([meRoomId,'inventory',i,'inventoryQuantity'],meQuantity);
             let stringToReturn = `You've dropped a ${allowedInventoryItems[i].inventoryName} here in ${(await getCurrentRoomDetails(currentRoomId)).shortDescription}.`;
             let currentRoomInventoryItems = (await getCurrentRoomDetails (currentRoomId)).inventory;
-            for (let j=0; j<currentRoomInventoryItems.length; j++) {
+            for (let j=0; j<currentRoomInventoryItems.length; j++) { // j = currentRoomInventory
               if (currentRoomInventoryItems[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) {
                 let roomQuantity = currentRoomInventoryItems[j].inventoryQuantity + 1;
                 modifyRoomInfo ([currentRoomId, 'inventory',j,'inventoryQuantity'], roomQuantity);
-                if ((await getCurrentRoomDetails(meRoomId)).inventory[i].inventoryQuantity<1) { // roomInfo[0].inventory[i].inventoryQuantity<1) {
-                  removeRoomInfo ([meRoomId,'inventory'],i);
+                if ((await getCurrentRoomDetails(meRoomId)).inventory[i].inventoryQuantity<1) {
+                  removeRoomInfo ([meRoomId,'inventory'],['inventoryName', allowedInventoryItems[i].inventoryName, i]);
                 }
                 return [currentRoom, newRoomFlag, alive, stringToReturn];
               }
@@ -273,9 +273,9 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
             let droppedItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
               inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
               inventoryQuantity: 1};
-              addRoomInfo ([currentRoomId,'inventory'],droppedItem);
-              if (allowedInventoryItems[i].inventoryQuantity<1) {
-                removeRoomInfo ([meRoomId,'inventory'],i);
+              addRoomInfo ([currentRoomId,'inventory',(await getCurrentRoomDetails(currentRoomId)).inventory.length],droppedItem);
+              if ((await getCurrentRoomDetails(meRoomId)).inventory[i].inventoryQuantity<1) {
+                removeRoomInfo ([meRoomId,'inventory'],['inventoryName', allowedInventoryItems[i].inventoryName, i]);
               }
               return [currentRoom, newRoomFlag, alive, stringToReturn];
             }
