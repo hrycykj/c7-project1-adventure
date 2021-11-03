@@ -96,7 +96,8 @@ let roomInfo=[
 
 async function findCurrentRoomIndexByName(room) {
     // console.log ('made it into find room index function',room)
-    return roomInfo.findIndex (el=>el.roomName==room); //returns -1 if the room doesn't match any of the existing rooms
+    let returnedIndex = roomInfo.findIndex (el=>el.roomName==room); //returns -1 if the room doesn't match any of the existing rooms
+    return [returnedIndex, returnedIndex]
     }
 
 async function getCurrentRoomDetails (roomIndex) {

@@ -1,12 +1,7 @@
 // main game structure
-
+currentGameName = {gameName: 'Adventure1.0Game'+Math.floor(Math.random() * 100)};
 
 let adventureFunctions = require('./adventureFunctions');
-// let {findCurrentRoomIndexByName,
-//     getCurrentRoomDetails,
-//     modifyRoomInfo,
-//     addRoomInfo,
-//     removeRoomInfo} = require('./roomInfo');
 
 
 
@@ -17,6 +12,7 @@ let currentRoom='forest';
 let isMeAlive=true;
 let whileRoomIsNew=true;
 
+
 //functions
 
 
@@ -24,16 +20,18 @@ let whileRoomIsNew=true;
 
 //main start
 async function mainGame() {
-    while (isMeAlive) {
-      console.log (await adventureFunctions.displayCurrentRoomInfo(currentRoom));
-      whileRoomIsNew=false;
-      while (!whileRoomIsNew&&isMeAlive) {
-        let actionPhrase='';
-        actionPhrase = adventureFunctions.waitForUserInput();
-        [currentRoom, whileRoomIsNew, isMeAlive, returnedOutputString] = await adventureFunctions.parseAndExecuteActionPhrase (actionPhrase, currentRoom, whileRoomIsNew);
-        console.log(returnedOutputString);
-      }
+  await adventureFunctions.initializeNewGameDb (currentGameName.gameName);
+  console.log (`Your current game is saved under ${currentGameName.gameName}`);
+  while (isMeAlive) {
+    console.log (await adventureFunctions.displayCurrentRoomInfo(currentRoom));
+    whileRoomIsNew=false;
+    while (!whileRoomIsNew&&isMeAlive) {
+      let actionPhrase='';
+      actionPhrase = adventureFunctions.waitForUserInput();
+      [currentRoom, whileRoomIsNew, isMeAlive, returnedOutputString] = await adventureFunctions.parseAndExecuteActionPhrase (actionPhrase, currentRoom, whileRoomIsNew);
+      console.log(returnedOutputString);
     }
+  }
   console.log('This is the end, my friend...');
 }
 

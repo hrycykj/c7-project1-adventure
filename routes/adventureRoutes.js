@@ -1,18 +1,21 @@
+currentGameName = {gameName: 'Adventure1.0Game'+Math.floor(Math.random() * 100)};
 const adventureFunctions = require('../model/adventureFunctions');
 
 const express = require('express')
 const router = express.Router()
 
-router.get('/gameHelp', (req, res) => {
-    res.send(adventureFunctions.gameHelp());
+router.get('/gameHelp', async (req, res) => {
+    res.send(await adventureFunctions.gameHelp());
 })
 
 router.get('/startGame', async (req, res) => {
     currentRoom='forest';
     isMeAlive=true;
     whileRoomIsNew=true;
+    currentGameName.gameName=(req.query.gameName||currentGameName.gameName);
 
-    res.send (await adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n');
+    await adventureFunctions.initializeNewGameDb (currentGameName.gameName);
+    res.send (await adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n'+`your game name is ${currentGameName.gameName}`);
     whileRoomIsNew=false;
 })
 
@@ -52,7 +55,7 @@ router.get('/', (req, res) => {
 `Welcome to Adventure (the Game).
     In this game you can type in verbs and nouns to do things.  
     If you need some help, try using /gameHelp.
-    Use /startGame to initialize the data for the game.
+    Use /startGame?gameName="name to save your game" to initialize the data for the game (note if this game name exists it will crash the database).
     Use /waitForUserInput?inputAction=verbs+nouns to enter your commands (use + instead of spaces).
     Use /endGame to stop the game.\n`
     res.send(instructions)

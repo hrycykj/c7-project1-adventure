@@ -1,9 +1,11 @@
 const prompt = require('prompt-sync')({sigint: true}); //run npm install prompt-sync in the terminal to make sure this will work, prompt is used in waitForUserInput function
-let {findCurrentRoomIndexByName,
+
+let {createNewGameDb,
+    findCurrentRoomIndexByName,
     getCurrentRoomDetails,
     modifyRoomInfo,
     addRoomInfo,
-    removeRoomInfo} = require('./roomInfo');
+    removeRoomInfo} = require('./roomInfoDb'); // change back to roomInfo to use static data object in roomInfo.js
 
 let currentRoom;
 let isMeAlive;
@@ -11,91 +13,86 @@ let whileRoomIsNew;
 
 
 
+async function initializeNewGameDb(fileName) {
+  await createNewGameDb (fileName);
+}
   
-  async function displayCurrentRoomInfo(currentRoom) { // pulls current room info and outputs a string to display with the room info
-    // once datebase is set up, get roomInfo[currentRoom].useLongRoomDescription
-    let currentRoomIndex = await findCurrentRoomIndexByName(currentRoom);
-    let currentRoomInfo = await getCurrentRoomDetails(currentRoomIndex);
-    let returnedRoomInfoString = "I don't really know where you are right now, something has gone terribly wrong..." // default returned string
-    if (currentRoomIndex>0) {
-      if (currentRoomInfo.useLongRoomDescription) {
-        returnedRoomInfoString = currentRoomInfo.longDescription;
-        modifyRoomInfo ([currentRoomIndex,'useLongRoomDescription'],false);
-        //console.log(roomInfo[currentRoomIndex].useLongRoomDescription)
-      } else {
-        returnedRoomInfoString = currentRoomInfo.shortDescription;
-      }
+async function displayCurrentRoomInfo(currentRoom) { // pulls current room info and outputs a string to display with the room info
+  // once datebase is set up, get roomInfo[currentRoom].useLongRoomDescription
+  let [currentRoomIndex,currentRoomId] = await findCurrentRoomIndexByName(currentRoom);
+  let currentRoomInfo = await getCurrentRoomDetails(currentRoomId);
+  let returnedRoomInfoString = "I don't really know where you are right now, something has gone terribly wrong..." // default returned string
+  if (currentRoomIndex>0) {
+    if (currentRoomInfo.useLongRoomDescription) {
+      returnedRoomInfoString = currentRoomInfo.longDescription;
+      modifyRoomInfo ([currentRoomIndex,'useLongRoomDescription'],false);
+    } else {
+      returnedRoomInfoString = currentRoomInfo.shortDescription;
     }
-    return returnedRoomInfoString
   }
+  return returnedRoomInfoString
+}
   
-  async function parseAndExecuteActionPhrase (actionPhrase, currentRoom, whileRoomIsNew) {  
-    let isMeAlive = true;
-    let actionNoun='';
-    let allowedRoomAction=false;
-    let allowedMeAction=false;
-    let returnedOutputString='';
-    // console.log('made it into the parse and execute function');
-    allowedRoomAction=await testUserInputAgainstAllowedActions (actionPhrase, currentRoom);
-    allowedMeAction=await testUserInputAgainstAllowedActions (actionPhrase, 'me');
-    // console.log('made it past testing user input agains the allowed lists', allowedRoomAction, allowedMeAction);
-    if (!(allowedRoomAction||allowedMeAction)) {
-      returnedOutputString="I'm sorry you'll have to speak up, I didn't hear that";  //add random response generator for actions that aren't allowed
-    } 
-      else if (allowedMeAction) {
-        // console.log('made it into the me action calls')
-        let meRoom='me'
-        actionNoun = nounToApplyTheAllowedActionTo (actionPhrase, allowedMeAction);
-        [meRoom,whileRoomIsNew,isMeAlive,returnedOutputString] = await this[allowedMeAction] (actionNoun,meRoom,whileRoomIsNew)
-        // console.log('made it to the end of the me action call')
-      }
-      else if (allowedRoomAction) {
-        // console.log('made it into the room action calls', allowedRoomAction)
-        actionNoun = nounToApplyTheAllowedActionTo (actionPhrase, allowedRoomAction);
-        // console.log('made it past figuring out the noun', actionNoun, currentRoom, whileRoomIsNew)
-        [currentRoom,whileRoomIsNew,isMeAlive,returnedOutputString] = await this[allowedRoomAction] (actionNoun,currentRoom,whileRoomIsNew)
-        // console.log('made it to the end of the me action call')
-      }
-      return [currentRoom,whileRoomIsNew,isMeAlive,returnedOutputString];
+async function parseAndExecuteActionPhrase (actionPhrase, currentRoom, whileRoomIsNew) {  
+  let isMeAlive = true;
+  let actionNoun='';
+  let allowedRoomAction=false;
+  let allowedMeAction=false;
+  let returnedOutputString='';
+  allowedRoomAction=await testUserInputAgainstAllowedActions (actionPhrase, currentRoom);
+  allowedMeAction=await testUserInputAgainstAllowedActions (actionPhrase, 'me');
+  if (!(allowedRoomAction||allowedMeAction)) {
+    returnedOutputString="I'm sorry you'll have to speak up, I didn't hear that";  //add random response generator for actions that aren't allowed
+  } 
+    else if (allowedMeAction) {
+      let meRoom='me'
+      actionNoun = nounToApplyTheAllowedActionTo (actionPhrase, allowedMeAction);
+      [meRoom,whileRoomIsNew,isMeAlive,returnedOutputString] = await this[allowedMeAction] (actionNoun,meRoom,whileRoomIsNew)
     }
+    else if (allowedRoomAction) {
+      actionNoun = nounToApplyTheAllowedActionTo (actionPhrase, allowedRoomAction);
+      [currentRoom,whileRoomIsNew,isMeAlive,returnedOutputString] = await this[allowedRoomAction] (actionNoun,currentRoom,whileRoomIsNew)
+    }
+    return [currentRoom,whileRoomIsNew,isMeAlive,returnedOutputString];
+}
 
-  function waitForUserInput() { // not used in server calls version in adventureRoutes.js
-    let userInput=prompt('>>');
-    console.log(`Hey there, this is what you typed: ${userInput}`);
-    return userInput;
-  }
+function waitForUserInput() { // not used in server calls version in adventureRoutes.js
+  let userInput=prompt('>>');
+  console.log(`Hey there, this is what you typed: ${userInput}`);
+  return userInput;
+}
   
-  async function testUserInputAgainstAllowedActions (proposedActionPhrase, currentRoom) { // see if part of the action phrase input is an allowed room or Me action
-    let currentRoomIndex = await findCurrentRoomIndexByName(currentRoom)
-    let currentRoomInfo = await getCurrentRoomDetails(currentRoomIndex);
-    let allowedActions = currentRoomInfo.roomActions;
-    let returnedAction=false;
-    let i=0;
-    while (i<allowedActions.length) {
-      if (proposedActionPhrase.toLowerCase().includes(allowedActions[i])) {
-        returnedAction=allowedActions[i];
-      }
-      i++
+async function testUserInputAgainstAllowedActions (proposedActionPhrase, currentRoom) { // see if part of the action phrase input is an allowed room or Me action
+  let [currentRoomIndex,currentRoomId] = await findCurrentRoomIndexByName(currentRoom)
+  let currentRoomInfo = await getCurrentRoomDetails(currentRoomId);
+  let allowedActions = currentRoomInfo.roomActions;
+  let returnedAction=false;
+  let i=0;
+  while (i<allowedActions.length) {
+    if (proposedActionPhrase.toLowerCase().includes(allowedActions[i])) {
+      returnedAction=allowedActions[i];
     }
-    return returnedAction;
+    i++
   }
+  return returnedAction;
+}
   
-  function nounToApplyTheAllowedActionTo (proposedActionPhrase, allowedAction) {
-    //assumes that the rest of the phrase right after the allowedAction is the noun to apply the allowedAction to
-    let returnedNoun=''
-    if (proposedActionPhrase.toLowerCase().search(allowedAction)<proposedActionPhrase.length){
-      returnedNoun=proposedActionPhrase.toLowerCase().substring((proposedActionPhrase.toLowerCase().search(allowedAction)+allowedAction.length+1),proposedActionPhrase.length);
-    }
-    return returnedNoun;
+function nounToApplyTheAllowedActionTo (proposedActionPhrase, allowedAction) {
+  //assumes that the rest of the phrase right after the allowedAction is the noun to apply the allowedAction to
+  let returnedNoun=''
+  if (proposedActionPhrase.toLowerCase().search(allowedAction)<proposedActionPhrase.length){
+    returnedNoun=proposedActionPhrase.toLowerCase().substring((proposedActionPhrase.toLowerCase().search(allowedAction)+allowedAction.length+1),proposedActionPhrase.length);
   }
+  return returnedNoun;
+}
 
 // room specific actions
 
 async function lookAt (inspectedObject, currentRoom, newRoomFlag) {
   let alive=true;
   let returnedObjectLookedAtString;
-  let currentRoomIndex = await findCurrentRoomIndexByName(currentRoom);
-  let currentRoomInfo = await getCurrentRoomDetails(currentRoomIndex);
+  let [currentRoomIndex,currentRoomId] = await findCurrentRoomIndexByName(currentRoom);
+  let currentRoomInfo = await getCurrentRoomDetails(currentRoomId);
   let allowedInventoryItems = currentRoomInfo.inventory;
   if (inspectedObject.length>0) {
     for (let i=0; i<allowedInventoryItems.length; i++) {
@@ -107,8 +104,7 @@ async function lookAt (inspectedObject, currentRoom, newRoomFlag) {
           if (allowedInventoryItems[i].useLongInventoryDescription) {
             returnedObjectLookedAtString = allowedInventoryItems[i].inventoryLongDescription;
             let attribute = "[inventory]["+i+"][useLongInventoryDescription]";
-            modifyRoomInfo ([currentRoomIndex,'inventory',i,'useLongInventoryDescription'],false);
-            //allowedInventoryItems[i].useLongInventoryDescription=false;  // call function to set inventory look to short description
+            modifyRoomInfo ([currentRoomId,'inventory',i,'useLongInventoryDescription'],false);  // call function to set inventory look to short description
           } else {
             returnedObjectLookedAtString = allowedInventoryItems[i].inventoryShortDescription;
           }
@@ -119,8 +115,7 @@ async function lookAt (inspectedObject, currentRoom, newRoomFlag) {
     returnedObjectLookedAtString = `I can't seem to see a ${inspectedObject}`;
     return [currentRoom, newRoomFlag, alive, returnedObjectLookedAtString];
   }
-  await modifyRoomInfo ([currentRoomIndex,'useLongRoomDescription'],true);
-  //roomInfo[currentRoomIndex].useLongRoomDescription=true;
+  await modifyRoomInfo ([currentRoomId,'useLongRoomDescription'],true);
   returnedObjectLookedAtString = await displayCurrentRoomInfo(currentRoom); //need to output this to screen from where its called
   return [currentRoom, newRoomFlag, alive,returnedObjectLookedAtString];
 }
@@ -143,13 +138,13 @@ async function inspect (inspectedObject, currentRoom, newRoomFlag) {  // set cur
 async function move (direction, currentRoom, newRoomFlag) {
   let alive = true;
   let returnedRoomString='';
-  let currentRoomIndex = await findCurrentRoomIndexByName(currentRoom);
-  let allowedAdjacentRooms = (await getCurrentRoomDetails(currentRoomIndex)).adjacentRooms;
+  let [currentRoomIndex,currentRoomId] = await findCurrentRoomIndexByName(currentRoom);
+  let allowedAdjacentRooms = (await getCurrentRoomDetails(currentRoomId)).adjacentRooms;
   for (let i=0; i<allowedAdjacentRooms.length; i++) {
     if (direction.includes(allowedAdjacentRooms[i].direction)) {
         newRoomFlag = true;
-        let adjacentRoomIndex=await findCurrentRoomIndexByName(allowedAdjacentRooms[i].adjacentRoomName);
-        returnedRoomString =`Moving ${direction} to ${(await getCurrentRoomDetails(adjacentRoomIndex)).shortDescription}`;
+        let [adjacentRoomIndex,adjacentRoomId]=await findCurrentRoomIndexByName(allowedAdjacentRooms[i].adjacentRoomName);
+        returnedRoomString =`Moving ${direction} to ${(await getCurrentRoomDetails(adjacentRoomId)).shortDescription}`;
         return [allowedAdjacentRooms[i].adjacentRoomName, newRoomFlag, alive,returnedRoomString];
     }
   }
@@ -170,11 +165,10 @@ async function go (direction, currentRoom, newRoomFlag) {  // same function call
 
 async function listInventory (action, currentRoom, newRoomFlag) {
   let alive=true;
-  let currentRoomIndex = await findCurrentRoomIndexByName(currentRoom);
+  let [currentRoomIndex,currentRoomId] = await findCurrentRoomIndexByName(currentRoom);
   let returnedInventoryString ='This is what I found:\n'
-  // let inventoryLength = (await getCurrentRoomDetails (currentRoomIndex)).inventory.length;
-  for (let i=0; i<(await getCurrentRoomDetails(currentRoomIndex)).inventory.length; i++) {
-    returnedInventoryString +=`${(await getCurrentRoomDetails(currentRoomIndex)).inventory[i].inventoryQuantity} ${(await getCurrentRoomDetails(currentRoomIndex)).inventory[i].inventoryName}\n`;
+  for (let i=0; i<(await getCurrentRoomDetails(currentRoomId)).inventory.length; i++) {
+    returnedInventoryString +=`${(await getCurrentRoomDetails(currentRoomId)).inventory[i].inventoryQuantity} ${(await getCurrentRoomDetails(currentRoomId)).inventory[i].inventoryName}\n`;
   }
   return [currentRoom, newRoomFlag, alive, returnedInventoryString];
 }
@@ -194,8 +188,9 @@ async function secret (action, currentRoom, newRoomFlag) { //returns the current
 async function get (itemToPickup, currentRoom, newRoomFlag) {
   let alive=true;
   let stringToReturn='';
-  let currentRoomIndex = await findCurrentRoomIndexByName(currentRoom);
-  let allowedInventoryItems = (await getCurrentRoomDetails(currentRoomIndex)).inventory;
+  let [currentRoomIndex,currentRoomId] = await findCurrentRoomIndexByName(currentRoom);
+  let [meRoomIndex, meRoomId] = await (findCurrentRoomIndexByName('me'));
+  let allowedInventoryItems = (await getCurrentRoomDetails(currentRoomId)).inventory;
   for (let i=0; i<allowedInventoryItems.length; i++) {
     if (itemToPickup.includes(allowedInventoryItems[i].inventoryName)) {
       if (allowedInventoryItems[i].inventoryQuantity==0) {
@@ -203,11 +198,11 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
         return [currentRoom, newRoomFlag, alive, stringToReturn];
       } else if (allowedInventoryItems[i].inventoryQuantity>0) {
         let roomQuantity = allowedInventoryItems[i].inventoryQuantity - 1;
-        modifyRoomInfo ([currentRoomIndex,'inventory',i,'inventoryQuantity'],roomQuantity);
-        for (let j=0; j<(await getCurrentRoomDetails(0)).inventory.length; j++) {
-          if ((await getCurrentRoomDetails(0)).inventory[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) { //change to get roomInfo for Me
-            let meQuantity = (await getCurrentRoomDetails(0)).inventory[j].inventoryQuantity+1;
-            modifyRoomInfo ([0,'inventory',j,'inventoryQuantity'],meQuantity);
+        modifyRoomInfo ([currentRoomId,'inventory',i,'inventoryQuantity'],roomQuantity);
+        for (let j=0; j<(await getCurrentRoomDetails(meRoomId)).inventory.length; j++) {
+          if ((await getCurrentRoomDetails(meRoomId)).inventory[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) { //change to get roomInfo for Me
+            let meQuantity = (await getCurrentRoomDetails(meRoomId)).inventory[j].inventoryQuantity+1;
+            modifyRoomInfo ([meRoomId,'inventory',j,'inventoryQuantity'],meQuantity);
             stringToReturn = `you've picked up the ${allowedInventoryItems[i].inventoryName}\n`;
             return [currentRoom, newRoomFlag, alive, stringToReturn];
           }
@@ -215,28 +210,24 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
         let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
           inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
           inventoryQuantity: 1};
-          addRoomInfo ([0,'inventory'],pickedUpItem);
-          // roomInfo[0].inventory.unshift(pickedUpItem);
+          addRoomInfo ([meRoomId,'inventory'],pickedUpItem);
           stringToReturn = `.you've picked up the ${allowedInventoryItems[i].inventoryName}\n`;
           return [currentRoom, newRoomFlag, alive, stringToReturn];
       } else if (allowedInventoryItems[i].inventoryQuantity<0) {
         let roomQuantity = allowedInventoryItems[i].inventoryQuantity + 1; // negative inventory items won't let you look at them, but you can pick them up then look at them
-        modifyRoomInfo ([currentRoomIndex,'inventory',i,'inventoryQuantity'],roomQuantity);
-        // roomInfo[currentRoomIndex].inventory[i].inventoryQuantity++; // modified to use modifyRoomInfo function
-        for (let j=0; j<(await getCurrentRoomDetails(0)).inventory.length; j++) {
-          if ((await getCurrentRoomDetails(0)).inventory[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) {
-            let meQuantity = (await getCurrentRoomDetails(0)).inventory[j].inventoryQuantity+1;
-            modifyRoomInfo ([0,'inventory',j,'inventoryQuantity'],meQuantity);
+        modifyRoomInfo ([currentRoomId,'inventory',i,'inventoryQuantity'],roomQuantity);
+        for (let j=0; j<(await getCurrentRoomDetails(meRoomId)).inventory.length; j++) {
+          if ((await getCurrentRoomDetails(meRoomId)).inventory[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) {
+            let meQuantity = (await getCurrentRoomDetails(meRoomId)).inventory[j].inventoryQuantity+1;
+            modifyRoomInfo ([meRoomId,'inventory',j,'inventoryQuantity'],meQuantity);
             stringToReturn = `..you've picked up the ${allowedInventoryItems[i].inventoryName}\n`;
-            //roomInfo[0].inventory[j].inventoryQuantity++ //use modifyRoomInfo function
             return [currentRoom, newRoomFlag, alive, stringToReturn];
           }
         }
         let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
           inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
           inventoryQuantity: 1};
-          addRoomInfo ([0,'inventory'],pickedUpItem);
-          // roomInfo[0].inventory.unshift(pickedUpItem);
+          addRoomInfo ([meRoomId,'inventory'],pickedUpItem);
           stringToReturn = `...you've picked up the ${allowedInventoryItems[i].inventoryName}\n`;
           return [currentRoom, newRoomFlag, alive,stringToReturn];
         }
@@ -256,8 +247,9 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
     async function drop (itemToDrop, currentRoom, newRoomFlag) {
       let alive=true;
       let stringToReturn = '';
-      let currentRoomIndex = await findCurrentRoomIndexByName(currentRoom);
-      let allowedInventoryItems = (await getCurrentRoomDetails(0)).inventory;
+      let [currentRoomIndex,currentRoomId] = await findCurrentRoomIndexByName(currentRoom);
+      let [meRoomIndex, meRoomId] = await (findCurrentRoomIndexByName('me'));
+      let allowedInventoryItems = (await getCurrentRoomDetails(meRoomId)).inventory;
       for (let i=0; i<allowedInventoryItems.length; i++) {
         if (itemToDrop.includes(allowedInventoryItems[i].inventoryName)) {
           if (allowedInventoryItems[i].inventoryQuantity<1) {
@@ -265,18 +257,15 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
             return [currentRoom, newRoomFlag, alive,stringToReturn];
           } else {
             let meQuantity = allowedInventoryItems[i].inventoryQuantity-1;
-            modifyRoomInfo ([0,'inventory',i,'inventoryQuantity'],meQuantity);
-            //roomInfo[0].inventory[i].inventoryQuantity--;
-            let stringToReturn = `You've dropped a ${allowedInventoryItems[i].inventoryName} here in ${(await getCurrentRoomDetails(currentRoomIndex)).shortDescription}.`;
-            let currentRoomInventoryItems = (await getCurrentRoomDetails (currentRoomIndex)).inventory;
+            modifyRoomInfo ([meRoomId,'inventory',i,'inventoryQuantity'],meQuantity);
+            let stringToReturn = `You've dropped a ${allowedInventoryItems[i].inventoryName} here in ${(await getCurrentRoomDetails(currentRoomId)).shortDescription}.`;
+            let currentRoomInventoryItems = (await getCurrentRoomDetails (currentRoomId)).inventory;
             for (let j=0; j<currentRoomInventoryItems.length; j++) {
               if (currentRoomInventoryItems[j].inventoryName.includes(allowedInventoryItems[i].inventoryName)) {
                 let roomQuantity = currentRoomInventoryItems[j].inventoryQuantity + 1;
-                modifyRoomInfo ([currentRoomIndex, 'inventory',j,'inventoryQuantity'], roomQuantity);
-                // roomInfo[currentRoomIndex].inventory[j].inventoryQuantity++;
-                if ((await getCurrentRoomDetails(0)).inventory[i].inventoryQuantity<1) { // roomInfo[0].inventory[i].inventoryQuantity<1) {
-                  removeRoomInfo ([0,'inventory'],i);
-                  // roomInfo[0].inventory.splice(i,1);
+                modifyRoomInfo ([currentRoomId, 'inventory',j,'inventoryQuantity'], roomQuantity);
+                if ((await getCurrentRoomDetails(meRoomId)).inventory[i].inventoryQuantity<1) { // roomInfo[0].inventory[i].inventoryQuantity<1) {
+                  removeRoomInfo ([meRoomId,'inventory'],i);
                 }
                 return [currentRoom, newRoomFlag, alive, stringToReturn];
               }
@@ -284,11 +273,9 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
             let droppedItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
               inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
               inventoryQuantity: 1};
-              addRoomInfo ([currentRoomIndex,'inventory'],droppedItem);
-              // roomInfo[currentRoomIndex].inventory.unshift(pickedUpItem);
+              addRoomInfo ([currentRoomId,'inventory'],droppedItem);
               if (allowedInventoryItems[i].inventoryQuantity<1) {
-                removeRoomInfo ([0,'inventory'],i);
-                // roomInfo[0].inventory.splice(i,1);
+                removeRoomInfo ([meRoomId,'inventory'],i);
               }
               return [currentRoom, newRoomFlag, alive, stringToReturn];
             }
@@ -303,8 +290,8 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
       async function help (itemToPickup, currentRoom, newRoomFlag) {
         let helpString='Welcome to Adventure (the Game).  In this game you can type in verbs and nouns to do things.  Some examples of the available verbs are:\n';
         let alive=true;
-        let currentRoomIndex = await findCurrentRoomIndexByName(currentRoom);
-        let currentRoomInfo = await getCurrentRoomDetails(currentRoomIndex);
+        let [currentRoomIndex,currentRoomId] = await findCurrentRoomIndexByName(currentRoom);
+        let currentRoomInfo = await getCurrentRoomDetails(currentRoomId);
         let currentRoomActions = currentRoomInfo.roomActions;
         for (let i=0; i<currentRoomActions.length-1; i++) { // don't show the last action verb since its secret and only for trouble shooting
           helpString=helpString+currentRoomActions[i]+', \n';
@@ -349,5 +336,6 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
                     secret,
                     pick,
                     endGame,
-                    gameHelp
+                    gameHelp,
+                    initializeNewGameDb
                 };
