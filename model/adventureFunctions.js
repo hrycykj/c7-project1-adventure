@@ -25,12 +25,41 @@ async function displayCurrentRoomInfo(currentRoom) { // pulls current room info 
   if (currentRoomIndex>0) {
     if (currentRoomInfo.useLongRoomDescription) {
       returnedRoomInfoString = currentRoomInfo.longDescription;
+      returnedRoomInfoString += await outputListOfInventoryForRoom (true, currentRoomInfo.inventory);
       modifyRoomInfo ([currentRoomId,'useLongRoomDescription'],false);
     } else {
       returnedRoomInfoString = currentRoomInfo.shortDescription;
+      returnedRoomInfoString += '.  ' + await outputListOfInventoryForRoom (false, currentRoomInfo.inventory);
     }
   }
   return returnedRoomInfoString
+}
+
+async function outputListOfInventoryForRoom (useLongDescription,currentRoomInventoryInfo) {
+  let outputString = '';
+  
+  function createLongOutputString(inventoryItem) {
+    if (inventoryItem.inventoryQuantity>=0) {
+      outputString += ' ' + inventoryItem.inventoryRoomDescription;
+    }
+  }
+
+  function createShortOutputString(inventoryItem) {
+    if (inventoryItem.inventoryQuantity>=0) {
+      outputString += inventoryItem.inventoryShortDescription + ', ';
+    }
+  }
+
+  if (useLongDescription) {
+    currentRoomInventoryInfo.forEach (createLongOutputString);
+  } else {
+    outputString = 'There are ';
+    currentRoomInventoryInfo.forEach (createShortOutputString);
+    outputString = outputString.slice(0,outputString.length-2);
+    console.log (outputString);
+    outputString += ' here.'
+  }
+  return outputString;
 }
   
 async function parseAndExecuteActionPhrase (actionPhrase, currentRoom, whileRoomIsNew) {  
@@ -158,6 +187,17 @@ async function climb (direction, currentRoom, newRoomFlag) {  // same function c
 }
 
 async function go (direction, currentRoom, newRoomFlag) {  // same function call as move
+  let newRoom = await move(direction, currentRoom, newRoomFlag);
+  return newRoom;
+}
+
+async function hit (direction, currentRoom, newRoomFlag) {  // same function call as move
+  let newRoom = await move(direction, currentRoom, newRoomFlag);
+  return newRoom;
+}
+
+async function unlock (direction, currentRoom, newRoomFlag) {  // same function call as move
+  // check to see if the player has the necklace with the key pendant
   let newRoom = await move(direction, currentRoom, newRoomFlag);
   return newRoom;
 }
@@ -344,6 +384,8 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
                     pick,
                     help,
                     climb,
+                    hit,
+                    unlock,
                     drop,
                     secret,
                     pick,

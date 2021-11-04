@@ -53,6 +53,7 @@ router.get('/endGame', (req, res) => {
 router.get('/', (req, res) => {
     let instructions = 
 `Welcome to Adventure (the Game).
+    The goal of this game is to find the entrance to the underground collosal cave.
     In this game you can type in verbs and nouns to do things.  
     If you need some help, try using /gameHelp.
     Use /startGame?gameName="name to save your game" to initialize the data for the game (note if this game name exists it will crash the database).
