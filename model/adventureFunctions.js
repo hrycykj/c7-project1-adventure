@@ -198,7 +198,18 @@ async function hit (direction, currentRoom, newRoomFlag) {  // same function cal
 
 async function unlock (direction, currentRoom, newRoomFlag) {  // same function call as move
   // check to see if the player has the necklace with the key pendant
-  let newRoom = await move(direction, currentRoom, newRoomFlag);
+  let [currentRoomIndex,currentRoomId] = await findCurrentRoomIndexByName('me');
+  let meInventory = (await getCurrentRoomDetails(currentRoomId)).inventory;
+  let necklace = 'necklace';
+  let newRoom= [];
+  for (let i=0; i<meInventory.length; i++) { // i = currentRoom array index
+    if (necklace.includes(meInventory[i].inventoryName)) {
+      newRoom = await move(direction, currentRoom, newRoomFlag);
+    } else {
+      returnedRoomString = "hm, the door won't budge.  I bet if you had a key you could unlock the door before opening it."
+      newRoom = [currentRoom, newRoomFlag, true ,returnedRoomString]
+    }
+  }
   return newRoom;
 }
   
@@ -250,7 +261,7 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
             return [currentRoom, newRoomFlag, alive, stringToReturn];
           }
         }
-        let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
+        let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName,inventoryRoomDescription: allowedInventoryItems[i].inventoryRoomDescription, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
           inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
           inventoryQuantity: 1};
           await addRoomInfo ([meRoomId,'inventory',(await getCurrentRoomDetails(meRoomId)).inventory.length],pickedUpItem);
@@ -273,7 +284,7 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
             return [currentRoom, newRoomFlag, alive, stringToReturn];
           }
         }
-        let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
+        let pickedUpItem ={inventoryName: allowedInventoryItems[i].inventoryName,inventoryRoomDescription: allowedInventoryItems[i].inventoryRoomDescription, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
           inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
           inventoryQuantity: 1};
           await addRoomInfo ([meRoomId,'inventory',(await getCurrentRoomDetails(meRoomId)).inventory.length],pickedUpItem);
@@ -322,7 +333,7 @@ async function get (itemToPickup, currentRoom, newRoomFlag) {
                 return [currentRoom, newRoomFlag, alive, stringToReturn];
               }
             }
-            let droppedItem ={inventoryName: allowedInventoryItems[i].inventoryName, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
+            let droppedItem ={inventoryName: allowedInventoryItems[i].inventoryName,inventoryRoomDescription: allowedInventoryItems[i].inventoryRoomDescription, inventoryLongDescription: allowedInventoryItems[i].inventoryLongDescription,
               inventoryShortDescription: allowedInventoryItems[i].inventoryShortDescription, useLongInventoryDescription: allowedInventoryItems[i].useLongInventoryDescription,
               inventoryQuantity: 1};
               await addRoomInfo ([currentRoomId,'inventory',(await getCurrentRoomDetails(currentRoomId)).inventory.length],droppedItem);
