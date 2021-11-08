@@ -56,7 +56,6 @@ async function outputListOfInventoryForRoom (useLongDescription,currentRoomInven
     outputString = 'There are ';
     currentRoomInventoryInfo.forEach (createShortOutputString);
     outputString = outputString.slice(0,outputString.length-2);
-    console.log (outputString);
     outputString += ' here.'
   }
   return outputString;

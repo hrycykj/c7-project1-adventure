@@ -13,6 +13,7 @@ router.get('/startGame', async (req, res) => {
     isMeAlive=true;
     whileRoomIsNew=true;
     currentGameName.gameName=(req.query.gameName||currentGameName.gameName);
+    console.log(currentGameName)
 
     await adventureFunctions.initializeNewGameDb (currentGameName.gameName);
     res.send (await adventureFunctions.displayCurrentRoomInfo(currentRoom)+'\n'+`your game name is ${currentGameName.gameName}`);
